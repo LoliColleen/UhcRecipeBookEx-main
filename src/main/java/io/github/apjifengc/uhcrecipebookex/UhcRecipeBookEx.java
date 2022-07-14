@@ -9,6 +9,7 @@ import com.gmail.val59000mc.listeners.*;
 import com.gmail.val59000mc.players.PlayerManager;
 import io.github.apjifengc.uhcrecipebookex.inventory.CraftRecipeInventory;
 import io.github.apjifengc.uhcrecipebookex.listener.PlayerListener;
+import io.github.apjifengc.uhcrecipebookex.listener.RecipeReminder;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -57,8 +58,8 @@ public final class UhcRecipeBookEx extends JavaPlugin implements Listener {
         }
     }
 
-    // this is SB(
-    private static PlayerListener sbPlayerListener;
+    @Getter private static PlayerListener playerListener;
+    @Getter private static RecipeReminder recipeReminder;
 
     private void load() {
         recipeInventory = new CraftRecipeInventory();
@@ -81,7 +82,8 @@ public final class UhcRecipeBookEx extends JavaPlugin implements Listener {
 //        assert playerManager != null;
         PlayerManager playerManager = GameManager.getGameManager().getPlayerManager();
         assert playerManager != null;
-        sbPlayerListener = new PlayerListener(playerManager);
+        playerListener = new PlayerListener(playerManager);
+        recipeReminder = new RecipeReminder(this);
 
         // Remove the default listener for the book item.
         for (RegisteredListener listener : PlayerInteractEvent.getHandlerList().getRegisteredListeners()) {

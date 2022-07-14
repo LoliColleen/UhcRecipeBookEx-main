@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'com.github.johnrengelman.shadow' version '7.1.0'
 }
 
 group = 'io.github.apjifengc'
@@ -15,13 +16,22 @@ repositories {
         name = 'sonatype'
         url = 'https://oss.sonatype.org/content/groups/public/'
     }
+    maven { url 'https://repository.alkaidmc.com/snapshots' }
 }
 
 dependencies {
-    implementation 'org.projectlombok:lombok:1.18.22'
+    implementation 'org.projectlombok:lombok:1.18.24'
     implementation files("$rootDir/libs/UhcCore-1.19.4.jar")
     compileOnly 'org.spigotmc:spigot-api:1.17.1-R0.1-SNAPSHOT'
+    shadow 'com.alkaidmc.alkaid:alkaid-message:1.0.0-SNAPSHOT'
     annotationProcessor 'org.projectlombok:lombok:1.18.22'
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+    archiveClassifier = ''
+
+    relocate 'com.alkaidmc.alkaid','io.github.apjifengc.uhcrecipebookex.internal.alkaid'
 }
 
 def targetJavaVersion = 11

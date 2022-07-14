@@ -3,6 +3,7 @@ package io.github.apjifengc.uhcrecipebookex;
 import com.gmail.val59000mc.customitems.Craft;
 import com.gmail.val59000mc.customitems.CraftsManager;
 import com.gmail.val59000mc.languages.Lang;
+import io.github.apjifengc.uhcrecipebookex.inventory.CraftingInventoryHolder;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -143,6 +144,17 @@ public class CraftsCommandExecutor implements CommandExecutor {
             CraftsManager.saveCraft(craft);
 
             CraftsManager.openCraftInventory(player, craft);
+            return true;
+        }
+
+        if (args[0].equalsIgnoreCase("auto")) {
+            if (args.length != 2) {
+                player.sendMessage(ChatColor.RED + "Usage: /craft auto <name>");
+                return true;
+            }
+
+            UhcRecipeBookEx.getRecipeInventory().getCrafts().stream().filter(it -> it.getName().equals(args[1])).findAny()
+                            .ifPresent(it -> CraftingInventoryHolder.autoOpen(player, it));
             return true;
         }
 

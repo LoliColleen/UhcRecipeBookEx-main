@@ -20,6 +20,7 @@ import io.github.apjifengc.uhcrecipebookex.Config;
 import io.github.apjifengc.uhcrecipebookex.UhcRecipeBookEx;
 import io.github.apjifengc.uhcrecipebookex.inventory.*;
 import io.github.apjifengc.uhcrecipebookex.inventory.item.*;
+import io.github.apjifengc.uhcrecipebookex.util.Util;
 import net.wesjd.anvilgui.AnvilGUI;
 import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
@@ -33,6 +34,7 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.meta.Damageable;
@@ -482,6 +484,9 @@ public class PlayerListener implements Listener {
                             reduce(inventory, addedItemCount);
                             addCraftedTimes(player, craft.getRealCraft(), addedItemCount);
                             showLimitMessage(player, craft);
+                            if(((InventoryView) event.getInventory()).getTitle().equals(Config.GUI_AUTO_CRAFTING_NAME)){
+                                player.closeInventory();
+                            }
                         } else {
                             if (craft.hasLimit() && getCraftedTimes(player, craft.getRealCraft()) == craft.getLimit()) {
                                 //broadcastMessage("(java.452)");
@@ -513,6 +518,9 @@ public class PlayerListener implements Listener {
                                     reduce(inventory, 1);
                                     addCraftedTimes(player, craft.getRealCraft(), 1);
                                     showLimitMessage(player, craft);
+                                    if(((InventoryView) event.getInventory()).getTitle().equals(Config.GUI_AUTO_CRAFTING_NAME)){
+                                        player.closeInventory();
+                                    }
                                 }
                             }
                         }
@@ -559,7 +567,7 @@ public class PlayerListener implements Listener {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    event.getPlayer().openInventory(recipe.createCraftingInventory());
+                    event.getPlayer().openInventory(recipe.createCraftingInventory(false));
                 }
             }.runTaskLater(plugin, 1);
             event.setCancelled(true);
@@ -606,6 +614,7 @@ public class PlayerListener implements Listener {
         } else {
             map.put(craft.getCraft(), map.get(craft.getCraft()) + amount);
         }
+        UhcRecipeBookEx.getRecipeReminder().recheck(player);
     }
 
     void reduce(Inventory inventory, int amount) {
@@ -640,7 +649,7 @@ public class PlayerListener implements Listener {
         return count;
     }
 
-    void updateInventory(Player player, Inventory inventory) {
+    public void updateInventory(Player player, Inventory inventory) {
         Optional<CraftRecipe> craft = getCurrentCraft(inventory, player);
         ItemStack newStack;
         newStack = craft.map(value -> value.getCraft().clone()).orElse(BARRIER);
@@ -699,48 +708,14 @@ public class PlayerListener implements Listener {
                 stacks[i] = new ItemStack(Material.AIR);
             }
 
-            ItemStack oriItem = stacks[i];
-            ItemStack oriTarget = craft.getRecipe().get(i);
+            ItemStack item = stacks[i];
+            ItemStack target = craft.getRecipe().get(i);
             if (!craft.getRecipe().get(i).hasItemMeta()) {
-                if (!(oriItem.getType() == oriTarget.getType())) {
+                if (!(item.getType() == target.getType())) {
                     return false;
                 }
             } else {
-                ItemStack item = oriItem.clone();
-                ItemStack target = oriTarget.clone();
-                if (item.hasItemMeta() && target.hasItemMeta()) {
-                    var itemMeta = item.getItemMeta();
-                    var targetMeta = target.getItemMeta();
-                    // ignore damage
-                    if (itemMeta instanceof Damageable && targetMeta instanceof Damageable) {
-                        ((Damageable) itemMeta).setDamage(0);
-                        ((Damageable) targetMeta).setDamage(0);
-                    }
-                    //ignore skull meta
-                    if (itemMeta instanceof SkullMeta && targetMeta instanceof SkullMeta) {
-                        ((SkullMeta) itemMeta).setOwningPlayer(null);
-                        ((SkullMeta) targetMeta).setOwningPlayer(null);
-                    }
-                    // ignore enchantments
-                    item.getEnchantments().forEach((k, v) -> item.removeEnchantment(k));
-                    target.getEnchantments().forEach((k, v) -> target.removeEnchantment(k));
-                    // ignore name
-                    itemMeta.setDisplayName(null);
-                    targetMeta.setDisplayName(null);
-                    // ignore lore
-                    itemMeta.setLore(null);
-                    targetMeta.setLore(null);
-                    // ignore attributes
-                    if (itemMeta.hasAttributeModifiers()) {
-                        itemMeta.getAttributeModifiers().forEach((k, v) -> itemMeta.removeAttributeModifier(k));
-                    }
-                    if (targetMeta.hasAttributeModifiers()) {
-                        targetMeta.getAttributeModifiers().forEach((k, v) -> itemMeta.removeAttributeModifier(k));
-                    }
-                    item.setItemMeta(itemMeta);
-                    target.setItemMeta(targetMeta);
-                }
-                if (!target.isSimilar(item)) {
+                if (!Util.simpleCheckSimilar(item, target)) {
                     return false;
                 }
             }
