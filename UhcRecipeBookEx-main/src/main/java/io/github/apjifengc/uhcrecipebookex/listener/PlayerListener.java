@@ -34,7 +34,6 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.meta.Damageable;
@@ -56,8 +55,11 @@ public class PlayerListener implements Listener {
     private final PlayerManager playerManager;
     GameManager gm = GameManager.getGameManager();
     public static final ItemStack BARRIER = new ItemStack(Material.BARRIER);
+    public static final ItemStack AIR = new ItemStack(Material.AIR);
 
+    Material[] itemStacks;
     public static Map<Long, Craft> craftMap = new HashMap<>();
+    public static Map<Long, Craft> craftNeed = new HashMap<>();
 
     private final Map<Player,Long> modularUsingLastUpdate = new HashMap<>();
 
@@ -413,15 +415,10 @@ public class PlayerListener implements Listener {
         if (event.getView().getTopInventory().getHolder() instanceof CraftingInventoryHolder) {
             Inventory inventory = event.getClickedInventory();
             Player player = (Player) event.getWhoClicked();
-            //broadcastMessage(event.getView().getTitle());
-            //broadcastMessage(Config.GUI_AUTO_CRAFTING_NAME);
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     updateInventory(player, event.getView().getTopInventory());
-                    if(event.getView().getTitle().contains(Config.GUI_AUTO_CRAFTING_NAME.replace("&8", ""))){
-                        player.closeInventory();
-                    }
                 }
             }.runTaskLater(plugin, 1);
             if (event.getClickedInventory() == event.getView().getTopInventory()) {
@@ -460,41 +457,10 @@ public class PlayerListener implements Listener {
                             if(addedItems.getItemMeta()!=null&&addedItems.getItemMeta().getLore()!=null&&addedItems.getItemMeta().getLore().contains(Lang.ITEMS_DEUS_EX_MACHINA)){
                                 player.setHealth(player.getHealth()/2);
                             }
-                            if(addedItems.getItemMeta()!=null&&addedItems.getItemMeta().getLore()!=null&&addedItems.getItemMeta().getLore().contains(Lang.ITEMS_ESSENCE)){
-                                reduce(inventory, 1);
-                                UhcPlayer uhcPlayer = playerManager.getUhcPlayer(player);
-                                uhcPlayer.getTeam().xpTeam(uhcPlayer);
-                                addCraftedTimes(player, craft.getRealCraft(), 1);
-                                showLimitMessage(player, craft);
-                                return;
-                            }
-                            if(addedItems.getItemMeta()!=null&&addedItems.getItemMeta().getLore()!=null&&addedItems.getItemMeta().getLore().contains(Lang.ITEMS_FENRIR)){
-                                reduce(inventory, 1);
-                                UhcItems.spawnFenrir(player.getLocation(),player);
-                                addCraftedTimes(player, craft.getRealCraft(), 1);
-                                showLimitMessage(player, craft);
-                                return;
-                            }
-                            if(addedItems.getItemMeta()!=null&&addedItems.getItemMeta().getLore()!=null&&addedItems.getItemMeta().getLore().contains(Lang.ITEMS_DAREDEVIL)){
-                                reduce(inventory, 1);
-                                UhcItems.spawnDaredevil(player.getLocation());
-                                addCraftedTimes(player, craft.getRealCraft(), 1);
-                                showLimitMessage(player, craft);
-                                return;
-                            }
                             //broadcastMessage("pass 2  " + addedItems.toString());
                             if(craft.getRealCraft()!=null && craft.getRealCraft().isUnbreakable()){
                                 ItemMeta meta = addedItems.getItemMeta();
                                 meta.setUnbreakable(true);
-                                addedItems.setItemMeta(meta);
-                            }
-                            if(addedItems.getItemMeta()!=null&&addedItems.getItemMeta().getLore()!=null&&itemStack.getType().getMaxStackSize()==1){
-                                ItemMeta meta = addedItems.getItemMeta();
-                                List<String> lores = meta.getLore();
-                                lores.add("");
-                                lores.add(Lang.ITEMS_MADE_BY.replaceAll("%player_name%",player.getName()
-                                        ).replaceAll("&","\u00A7"));
-                                meta.setLore(lores);
                                 addedItems.setItemMeta(meta);
                             }
                             //broadcastMessage("pass 3  " + addedItems.toString());
@@ -538,40 +504,9 @@ public class PlayerListener implements Listener {
                                     if(newStack.getItemMeta()!=null&&newStack.getItemMeta().getLore()!=null&&newStack.getItemMeta().getLore().contains(Lang.ITEMS_DEUS_EX_MACHINA)){
                                         player.setHealth(player.getHealth()/2);
                                     }
-                                    if(newStack.getItemMeta()!=null&&newStack.getItemMeta().getLore()!=null&&newStack.getItemMeta().getLore().contains(Lang.ITEMS_ESSENCE)){
-                                        reduce(inventory, 1);
-                                        UhcPlayer uhcPlayer = playerManager.getUhcPlayer(player);
-                                        uhcPlayer.getTeam().xpTeam(uhcPlayer);
-                                        addCraftedTimes(player, craft.getRealCraft(), 1);
-                                        showLimitMessage(player, craft);
-                                        return;
-                                    }
-                                    if(newStack.getItemMeta()!=null&&newStack.getItemMeta().getLore()!=null&&newStack.getItemMeta().getLore().contains(Lang.ITEMS_FENRIR)){
-                                        reduce(inventory, 1);
-                                        UhcItems.spawnFenrir(player.getLocation(),player);
-                                        addCraftedTimes(player, craft.getRealCraft(), 1);
-                                        showLimitMessage(player, craft);
-                                        return;
-                                    }
-                                    if(newStack.getItemMeta()!=null&&newStack.getItemMeta().getLore()!=null&&newStack.getItemMeta().getLore().contains(Lang.ITEMS_DAREDEVIL)){
-                                        reduce(inventory, 1);
-                                        UhcItems.spawnDaredevil(player.getLocation());
-                                        addCraftedTimes(player, craft.getRealCraft(), 1);
-                                        showLimitMessage(player, craft);
-                                        return;
-                                    }
                                     if(craft.getRealCraft()!=null && craft.getRealCraft().isUnbreakable()){
                                         ItemMeta meta = newStack.getItemMeta();
                                         meta.setUnbreakable(true);
-                                        newStack.setItemMeta(meta);
-                                    }
-                                    if(newStack.getItemMeta()!=null&&newStack.getItemMeta().getLore()!=null&&itemStack.getType().getMaxStackSize()==1){
-                                        ItemMeta meta = newStack.getItemMeta();
-                                        List<String> lores = meta.getLore();
-                                        lores.add("");
-                                        lores.add(Lang.ITEMS_MADE_BY.replaceAll("%player_name%",player.getName()
-                                            ).replaceAll("&","\u00A7"));
-                                        meta.setLore(lores);
                                         newStack.setItemMeta(meta);
                                     }
                                     newStack.setAmount(amount);
@@ -625,7 +560,7 @@ public class PlayerListener implements Listener {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    event.getPlayer().openInventory(recipe.createCraftingInventory(false));
+                    event.getPlayer().openInventory(recipe.createCraftingInventory());
                 }
             }.runTaskLater(plugin, 1);
             event.setCancelled(true);
@@ -891,8 +826,6 @@ public class PlayerListener implements Listener {
                 hash = 131 * hash + Material.MUSIC_DISC_13.hashCode();
             } else if (Tag.WOOL.isTagged(itemStack.getType())) {
                 hash = 131 * hash + Material.WHITE_WOOL.hashCode();
-            } else if (Tag.LEAVES.isTagged(itemStack.getType())) {
-                hash = 131 * hash + Material.OAK_LEAVES.hashCode();
             } else if (itemStack.getType().equals(Material.CHARCOAL)) {
                 hash = 131 * hash + Material.COAL.hashCode();
             } else if (itemStack.getType().equals(Material.COBBLED_DEEPSLATE)) {

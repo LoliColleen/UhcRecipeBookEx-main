@@ -89,12 +89,10 @@ public class RecipeReminder implements Listener {
                     }
                 }
                 if (!reminds.isEmpty()) {
-                    var builder = message.text().green(Config.RECIPE_REMIND_MESSAGE);
+                    var builder = message.text().yellow("注意！", Format.BOLD).text("你现在可以合成：");
                     for (Craft remind : reminds) {
-                        builder.append(it -> it.gold("[" + Util.getItemName(remind.getDisplayItem())
-                                                .replaceAll("\u00A7a","")
-                                                + "]")
-                                        .hover(hover -> hover.text().gold(Config.BUTTON_HOVER_MESSAGE))
+                        builder.append(it -> it.green("[" + Util.getItemName(remind.getDisplayItem()) + "]")
+                                        .hover(hover -> hover.text().green("点击进入合成界面"))
                                         .click(ClickEvent.Action.RUN_COMMAND, "/craft auto " + remind.getName()))
                                 .text(", ");
                     }

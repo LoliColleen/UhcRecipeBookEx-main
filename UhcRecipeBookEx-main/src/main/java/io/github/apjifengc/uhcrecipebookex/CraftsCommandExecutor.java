@@ -31,7 +31,6 @@ public class CraftsCommandExecutor implements CommandExecutor {
 
         Player player = (Player) sender;
 
-
         if (args.length == 0) {
             if (!CraftsManager.isAtLeastOneCraft()) {
                 // no crafts
@@ -40,17 +39,6 @@ public class CraftsCommandExecutor implements CommandExecutor {
             }
 
             player.openInventory(UhcRecipeBookEx.getRecipeInventory().createMainInventory(0));
-            return true;
-        }
-
-        if (args[0].equalsIgnoreCase("auto")) {
-            if (args.length != 2) {
-                player.sendMessage(ChatColor.RED + "Usage: /craft auto <name>");
-                return true;
-            }
-
-            UhcRecipeBookEx.getRecipeInventory().getCrafts().stream().filter(it -> it.getName().equals(args[1])).findAny()
-                    .ifPresent(it -> CraftingInventoryHolder.autoOpen(player, it));
             return true;
         }
 
@@ -159,7 +147,18 @@ public class CraftsCommandExecutor implements CommandExecutor {
             return true;
         }
 
-        player.sendMessage(ChatColor.DARK_GREEN + "[UhcRecipeBookEx] Craft creation commands:");
+        if (args[0].equalsIgnoreCase("auto")) {
+            if (args.length != 2) {
+                player.sendMessage(ChatColor.RED + "Usage: /craft auto <name>");
+                return true;
+            }
+
+            UhcRecipeBookEx.getRecipeInventory().getCrafts().stream().filter(it -> it.getName().equals(args[1])).findAny()
+                            .ifPresent(it -> CraftingInventoryHolder.autoOpen(player, it));
+            return true;
+        }
+
+        player.sendMessage(ChatColor.DARK_GREEN + "Craft creation commands:");
         player.sendMessage(ChatColor.GREEN + " - '/craft name <name>' (To change the craft name)");
         player.sendMessage(ChatColor.GREEN + " - '/craft item <item-number (1-9)>' (While holding the item you want in your recipe)");
         player.sendMessage(ChatColor.GREEN + " - '/craft craft' (While holding the item you want as craft)");
