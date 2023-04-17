@@ -105,15 +105,10 @@ public class CraftRecipeInventory {
         return gui;
     }
 
-    public Inventory createCraftingInventory(Boolean auto) {
+    public Inventory createCraftingInventory() {
         Inventory gui = Bukkit.createInventory(new CraftingInventoryHolder(), Config.CRAFTING_PATTERN.size() * 9,
                 Config.GUI_CRAFTING_NAME.replace("&", "\u00A7")
         );
-        if(auto){
-            gui = Bukkit.createInventory(new CraftingInventoryHolder(), Config.CRAFTING_PATTERN.size() * 9,
-                    Config.GUI_AUTO_CRAFTING_NAME.replace("&", "\u00A7")
-            );
-        }
         for (int i = 0; i < Config.CRAFTING_PATTERN.size(); i++) {
             for (int j = 0; j < 9; j++) {
                 InventoryItem item = getInventoryItem(Config.CRAFTING_PATTERN, i, j);

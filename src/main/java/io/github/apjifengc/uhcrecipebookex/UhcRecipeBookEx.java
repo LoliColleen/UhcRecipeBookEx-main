@@ -7,6 +7,7 @@ import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.game.GameState;
 import com.gmail.val59000mc.listeners.*;
 import com.gmail.val59000mc.players.PlayerManager;
+import io.github.apjifengc.uhcrecipebookex.inventory.BackpackInventory;
 import io.github.apjifengc.uhcrecipebookex.inventory.CraftRecipeInventory;
 import io.github.apjifengc.uhcrecipebookex.listener.PlayerListener;
 import io.github.apjifengc.uhcrecipebookex.listener.RecipeReminder;
@@ -31,6 +32,9 @@ public final class UhcRecipeBookEx extends JavaPlugin implements Listener {
 
     @Getter
     private static CraftRecipeInventory recipeInventory;
+
+    @Getter
+    private static BackpackInventory backpackInventory;
 
     public UhcRecipeBookEx() {
         instance = this;
@@ -63,6 +67,7 @@ public final class UhcRecipeBookEx extends JavaPlugin implements Listener {
 
     private void load() {
         recipeInventory = new CraftRecipeInventory();
+        backpackInventory = new BackpackInventory();
 //        PlayerManager playerManager = null;
 //
 //        try {

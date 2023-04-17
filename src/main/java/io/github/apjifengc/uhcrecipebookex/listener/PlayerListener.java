@@ -21,8 +21,11 @@ import io.github.apjifengc.uhcrecipebookex.UhcRecipeBookEx;
 import io.github.apjifengc.uhcrecipebookex.inventory.*;
 import io.github.apjifengc.uhcrecipebookex.inventory.item.*;
 import io.github.apjifengc.uhcrecipebookex.util.Util;
+//import me.emptyirony.enchantmentbook.enchantmentbook.EnchantmentBook;
 import net.wesjd.anvilgui.AnvilGUI;
 import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.block.ShulkerBox;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -33,21 +36,18 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryView;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.Recipe;
-import org.bukkit.inventory.meta.Damageable;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.inventory.*;
+import org.bukkit.inventory.meta.*;
 import org.bukkit.potion.Potion;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
 import static org.bukkit.Bukkit.broadcastMessage;
+import static org.bukkit.Bukkit.getLogger;
 
 public class PlayerListener implements Listener {
     private final UhcRecipeBookEx plugin = UhcRecipeBookEx.getInstance();
@@ -59,7 +59,7 @@ public class PlayerListener implements Listener {
 
     public static Map<Long, Craft> craftMap = new HashMap<>();
 
-    private final Map<Player,Long> modularUsingLastUpdate = new HashMap<>();
+    private ItemStack addedItemStack;
 
     static {
         ItemMeta meta = BARRIER.getItemMeta();
@@ -110,58 +110,7 @@ public class PlayerListener implements Listener {
         if (UhcItems.isModularBowPunchItem(hand)
                 ||UhcItems.isModularBowLightningItem(hand)
                 ||UhcItems.isModularBowPoisonItem(hand)){
-            handleModularSwitch(10, hand, player);
-        }
-    }
-
-    public void handleModularSwitch(int cooldown, ItemStack hand, Player player){
-        // Check cooldown
-        if (cooldown != -1 && (cooldown*TimeUtils.SECOND_TICKS) + modularUsingLastUpdate.getOrDefault(player,-1L) > System.currentTimeMillis()){
-            return;
-        }
-
-        modularUsingLastUpdate.put(player,System.currentTimeMillis());
-
-        player.playSound(player.getLocation(),Sound.ENTITY_ARROW_HIT_PLAYER,1,1);
-        ItemMeta itemMeta = hand.getItemMeta();
-
-        if(UhcItems.isModularBowPunchItem(hand)){
-            player.sendMessage(Lang.ITEMS_MODULAR_BOW_TO_POISON_1);
-            player.sendMessage(Lang.ITEMS_MODULAR_BOW_TO_POISON_2);
-            itemMeta.removeEnchant(Enchantment.ARROW_KNOCKBACK);
-            itemMeta.setLore(List.of(Lang.ITEMS_MODULAR_BOW_POISON
-                    ,Lang.ITEMS_MODULAR_BOW_LORE_1
-                    ,Lang.ITEMS_MODULAR_BOW_LORE_2
-                    ,Lang.ITEMS_MODULAR_BOW_LORE_3
-                    ,Lang.ITEMS_MODULAR_BOW_LORE_4));
-            hand.setItemMeta(itemMeta);
-            return;
-        }
-
-        if(UhcItems.isModularBowLightningItem(hand)){
-            player.sendMessage(Lang.ITEMS_MODULAR_BOW_TO_PUNCH_1);
-            player.sendMessage(Lang.ITEMS_MODULAR_BOW_TO_PUNCH_2);
-            itemMeta.addEnchant(Enchantment.ARROW_KNOCKBACK,1,true);
-            itemMeta.setLore(List.of(Lang.ITEMS_MODULAR_BOW_PUNCH
-                    ,Lang.ITEMS_MODULAR_BOW_LORE_1
-                    ,Lang.ITEMS_MODULAR_BOW_LORE_2
-                    ,Lang.ITEMS_MODULAR_BOW_LORE_3
-                    ,Lang.ITEMS_MODULAR_BOW_LORE_4));
-            hand.setItemMeta(itemMeta);
-            return;
-        }
-
-        if(UhcItems.isModularBowPoisonItem(hand)){
-            player.sendMessage(Lang.ITEMS_MODULAR_BOW_TO_LIGHTNING_1);
-            player.sendMessage(Lang.ITEMS_MODULAR_BOW_TO_LIGHTNING_2);
-            itemMeta.removeEnchant(Enchantment.ARROW_KNOCKBACK);
-            itemMeta.setLore(List.of(Lang.ITEMS_MODULAR_BOW_LIGHTNING
-                    ,Lang.ITEMS_MODULAR_BOW_LORE_1
-                    ,Lang.ITEMS_MODULAR_BOW_LORE_2
-                    ,Lang.ITEMS_MODULAR_BOW_LORE_3
-                    ,Lang.ITEMS_MODULAR_BOW_LORE_4));
-            hand.setItemMeta(itemMeta);
-            return;
+            UhcItems.handleModularSwitch(4, hand, player);
         }
     }
 
@@ -177,13 +126,14 @@ public class PlayerListener implements Listener {
         Player player = event.getPlayer();
         UhcPlayer uhcPlayer = GameManager.getGameManager().getPlayerManager().getUhcPlayer(player);
         ItemStack hand = player.getInventory().getItemInMainHand();
+        ItemStack item = event.getItem();
 
-        if (Tag.SHULKER_BOXES.isTagged(hand.getType()) && player.isSneaking()) {
+        /*if (Tag.SHULKER_BOXES.isTagged(hand.getType())) {
             event.setCancelled(true);
             player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_OPEN, 1, 1);
             player.openInventory(ShulkerInventoryHandler.createShulkerBoxInventory(player, player.getInventory().getItemInMainHand()));
             return;
-        }
+        }*/
 
         Bukkit.getScheduler().scheduleSyncDelayedTask(UhcCore.getPlugin(), new CheckArmorThread(player), 1);
 
@@ -194,48 +144,50 @@ public class PlayerListener implements Listener {
             return;
         }
 
-        GameState state = GameManager.getGameManager().getGameState();
+        GameManager gameManager = GameManager.getGameManager();
+        GameState state = gameManager.getGameState();
         if ((state == GameState.PLAYING || state == GameState.DEATHMATCH)
-                && UhcItems.isRegenHeadItem(hand)
                 && uhcPlayer.getState().equals(PlayerState.PLAYING)
                 && (event.getAction() == Action.RIGHT_CLICK_AIR
                 || event.getAction() == Action.RIGHT_CLICK_BLOCK)
         ) {
-            event.setCancelled(true);
-            uhcPlayer.getTeam().regenTeam(false, 1, uhcPlayer);
-        }
-
-        if ((state == GameState.PLAYING || state == GameState.DEATHMATCH)
-                && UhcItems.isGoldenHeadItem(hand)
-                && uhcPlayer.getState().equals(PlayerState.PLAYING)
-                && (event.getAction() == Action.RIGHT_CLICK_AIR
-                || event.getAction() == Action.RIGHT_CLICK_BLOCK)
-        ) {
-            event.setCancelled(true);
-            uhcPlayer.getTeam().regenTeamGold(false, 1, uhcPlayer);
-        }
-
-        if ((state == GameState.PLAYING || state == GameState.DEATHMATCH)
-                && UhcItems.isCornItem(hand)
-                && uhcPlayer.getState().equals(PlayerState.PLAYING)
-                && (event.getAction() == Action.RIGHT_CLICK_AIR
-                || event.getAction() == Action.RIGHT_CLICK_BLOCK)
-        ) {
-            event.setCancelled(true);
-            uhcPlayer.regenPlayerCorn(1,uhcPlayer);
-        }
-
-        if ((state == GameState.PLAYING || state == GameState.DEATHMATCH)
-                && UhcItems.isMasterCompassItem(hand)
-                && uhcPlayer.getState().equals(PlayerState.PLAYING)
-                && (event.getAction() == Action.RIGHT_CLICK_AIR
-                || event.getAction() == Action.RIGHT_CLICK_BLOCK)
-        ) {
-            event.setCancelled(true);
-            //if (hand.getAmount() > 0) {
-            //	hand.setAmount(hand.getAmount() - 1);
-            //}
-            uhcPlayer.pointMasterCompassToPlayer(1,uhcPlayer);
+            if(UhcItems.isGoldenHeadItem(item)){
+                uhcPlayer.getTeam().regenTeamGold(false, 1, uhcPlayer, item);
+                event.setCancelled(true);
+                return;
+            }
+            if(UhcItems.isRegenHeadItem(item)){
+                uhcPlayer.getTeam().regenTeam(false, 1, uhcPlayer, item);
+                event.setCancelled(true);
+                return;
+            }
+            if(UhcItems.isBackpackItem(item)&&Tag.SHULKER_BOXES.isTagged(item.getType())){
+                event.setCancelled(true);
+                player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_OPEN, 1, 1);
+                player.openInventory(UhcRecipeBookEx.getBackpackInventory().createInventory(item));
+                //player.openInventory(ShulkerInventoryHandler.createShulkerBoxInventory(player, hand));
+                return;
+            }
+			/*if(UhcItems.isBackpackItem(event.getPlayer().getInventory().getItemInOffHand())&&Tag.SHULKER_BOXES.isTagged(player.getInventory().getItemInOffHand().getType())){
+				event.setCancelled(true);
+				return;
+			}*/
+            if(UhcItems.isCornItem(item)){
+                uhcPlayer.regenPlayerCorn(1,uhcPlayer, item);
+                event.setCancelled(true);
+                return;
+            }
+            if(UhcItems.isMasterCompassItem(hand)){
+                uhcPlayer.pointMasterCompassToPlayer(2,uhcPlayer, item);
+                event.setCancelled(true);
+                return;
+            }
+            if(UhcItems.isTheMarkItem(item)){
+                if(!uhcPlayer.isTheMarkCooldown(5,uhcPlayer)){
+                    UhcItems.launchTheMark(player);
+                }
+                event.setCancelled(true);
+            }
         }
     }
 
@@ -374,8 +326,132 @@ public class PlayerListener implements Listener {
                 .open(player);
     }
 
+    private boolean isCantEnchant(ItemStack itemStack){
+        return itemStack.getItemMeta() != null
+                && itemStack.getItemMeta().getLore() != null
+                && itemStack.getItemMeta().getLore().contains(Lang.ITEMS_CANT_ENCHANT);
+    }
+
+    private boolean isCantMove(ItemStack itemStack){
+        return itemStack.getItemMeta() != null
+                && itemStack.getItemMeta().getLore() != null
+                && itemStack.getItemMeta().getLore().contains(Lang.ITEMS_CANT_MOVE);
+    }
+
+    private boolean isEnchantCheckInventory(InventoryType inventoryType){
+        return inventoryType.equals(InventoryType.ANVIL)
+                || inventoryType.equals(InventoryType.GRINDSTONE)
+                || inventoryType.equals(InventoryType.SMITHING)
+                || inventoryType.equals(InventoryType.ENCHANTING);
+    }
+
     @EventHandler
     void onInventoryClick(InventoryClickEvent event) {
+
+        if (event.getClickedInventory()!=null) {
+
+            if (event.isRightClick()) {
+                ItemStack item = event.getCurrentItem();
+                Player player = (Player) event.getWhoClicked();
+                if (UhcItems.isBackpackItem(item)) {
+                    event.setCancelled(true);
+                    player.playSound(player.getLocation(), Sound.ENTITY_SHULKER_OPEN, 1, 1);
+                    player.openInventory(UhcRecipeBookEx.getBackpackInventory().createInventory(item));
+                    return;
+                }
+            }
+
+            if (isEnchantCheckInventory(event.getView().getTopInventory().getType())){
+                if (event.isLeftClick()||event.isRightClick()){
+
+                    if (event.isShiftClick()) {
+                        if (event.getClickedInventory().getType().equals(InventoryType.PLAYER)) {
+                            if (event.getCurrentItem() != null && isCantEnchant(event.getCurrentItem())) {
+                                event.setCancelled(true);
+                                return;
+                            }
+                        }
+                    }else{
+                        if (isEnchantCheckInventory(event.getClickedInventory().getType())) {
+                            if (event.getCursor() != null && isCantEnchant(event.getCursor())) {
+                                event.setCancelled(true);
+                                return;
+                            }
+                        }
+                    }
+
+                }
+
+                if (event.getClick().equals(ClickType.NUMBER_KEY)){
+                    if (isEnchantCheckInventory(event.getClickedInventory().getType())){
+                        if (event.getView().getBottomInventory().getItem(event.getHotbarButton())!=null
+                                && isCantEnchant(event.getView().getBottomInventory().getItem(event.getHotbarButton()))){
+                            event.setCancelled(true);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            if (event.getView().getTopInventory().getHolder() instanceof BackpackInventoryHolder) {
+                if (UhcItems.isBackpackItem(event.getCurrentItem())) {
+                    event.setCancelled(true);
+                    return;
+                }
+
+                if (event.getClickedInventory().getHolder() instanceof BackpackInventoryHolder) {
+                    ((BackpackInventoryHolder) event.getClickedInventory().getHolder()).handleClick(event.getInventory(), (Player) event.getWhoClicked());
+                    return;
+                }
+            }
+
+            // Check cant move
+            if (event.getCurrentItem() != null && isCantMove(event.getCurrentItem())) {
+                event.setCancelled(true);
+                return;
+            }
+
+            if (event.getClickedInventory() instanceof AnvilInventory) {
+                AnvilInventory anvil = (AnvilInventory) event.getClickedInventory();
+                ItemStack slot0 = anvil.getItem(0);
+                ItemStack slot1 = anvil.getItem(1);
+
+                if (event.getSlot() == 2
+                        && slot1 != null
+                        && slot1.getItemMeta() != null
+                        && slot1.getItemMeta().getLore() != null
+                        && slot1.getItemMeta().getLore().contains(Lang.ITEMS_ENHANCEMENT_BOOK)) {
+                    event.setCancelled(true);
+
+                    if (event.isLeftClick() && slot0 != null
+                            && !(slot0.getType().equals(Material.WOODEN_PICKAXE)
+                            || slot0.getType().equals(Material.STONE_PICKAXE)
+                            || slot0.getType().equals(Material.IRON_PICKAXE)
+                            || slot0.getType().equals(Material.GOLDEN_PICKAXE)
+                            || slot0.getType().equals(Material.DIAMOND_PICKAXE)
+                            || slot0.getType().equals(Material.NETHERITE_PICKAXE))) {
+                        if (event.getClick().isShiftClick()) {
+                            ItemStack resultEnhanced = UhcItems.handleEnhancementBook(slot0.clone());
+                            anvil.setContents(new ItemStack[anvil.getSize()]);
+                            event.getWhoClicked().getInventory().addItem(resultEnhanced);
+                            Player player = (Player) event.getWhoClicked();
+                            player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 1f, 1f);
+                        } else {
+                            ItemStack resultEnhanced = UhcItems.handleEnhancementBook(slot0.clone());
+                            anvil.setContents(new ItemStack[anvil.getSize()]);
+                            event.getWhoClicked().setItemOnCursor(resultEnhanced);
+                            Player player = (Player) event.getWhoClicked();
+                            player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 1f, 1f);
+                        }
+                    }
+                }
+                return;
+            }
+        }
+
+
+        // Custom crafting table
+
         if (event.getView().getTopInventory().getHolder() instanceof CraftRecipeInventoryHolder) {
             event.setCancelled(true);
             if (event.getClickedInventory() == event.getView().getTopInventory()) {
@@ -398,6 +474,7 @@ public class PlayerListener implements Listener {
                     event.getWhoClicked().closeInventory();
                 }
             }
+            return;
         }
         if (event.getView().getTopInventory().getHolder() instanceof CraftRecipeViewerInventoryHolder) {
             event.setCancelled(true);
@@ -409,6 +486,7 @@ public class PlayerListener implements Listener {
                     event.getWhoClicked().openInventory(holder.getLastInventory());
                 }
             }
+            return;
         }
         if (event.getView().getTopInventory().getHolder() instanceof CraftingInventoryHolder) {
             Inventory inventory = event.getClickedInventory();
@@ -419,9 +497,9 @@ public class PlayerListener implements Listener {
                 @Override
                 public void run() {
                     updateInventory(player, event.getView().getTopInventory());
-                    if(event.getView().getTitle().contains(Config.GUI_AUTO_CRAFTING_NAME.replace("&8", ""))){
+                    /*if(event.getView().getTitle().contains(Config.GUI_AUTO_CRAFTING_NAME.replace("&8", ""))){
                         player.closeInventory();
-                    }
+                    }*/
                 }
             }.runTaskLater(plugin, 1);
             if (event.getClickedInventory() == event.getView().getTopInventory()) {
@@ -437,7 +515,7 @@ public class PlayerListener implements Listener {
                         }
                         CraftRecipe craft = craftOptional.get();
                         ItemStack itemStack = craft.getCraft();
-                        if(itemStack == null || itemStack.getType().equals(Material.AIR)){
+                        if(itemStack == null || itemStack.getType().equals(Material.AIR) || itemStack.getType().equals(Material.BARRIER)){
                             //broadcastMessage("(java.406)");
                             return;
                         }
@@ -450,78 +528,60 @@ public class PlayerListener implements Listener {
                             }
                         }
                         //broadcastMessage("passed");
+                        if (craft.hasLimit() && getCraftedTimes(player, craft.getRealCraft()) >= craft.getLimit()) {
+                            player.sendMessage(Config.REACH_LIMIT_MESSAGE.replaceAll("&", "\u00A7"));
+                            return;
+                        }
                         if (event.isShiftClick()) {
-                            ItemStack addedItems = itemStack.clone();
-                            //broadcastMessage(addedItems.toString());
-                            if(addedItems.getItemMeta()!=null&&addedItems.getItemMeta().getLore()!=null&&addedItems.getItemMeta().getLore().contains(Lang.ITEMS_FUSION_ARMOR)){
-                                addedItems = UhcItems.createFusionArmor();
-                            }
-                            //broadcastMessage("pass 1  " + addedItems.toString());
-                            if(addedItems.getItemMeta()!=null&&addedItems.getItemMeta().getLore()!=null&&addedItems.getItemMeta().getLore().contains(Lang.ITEMS_DEUS_EX_MACHINA)){
-                                player.setHealth(player.getHealth()/2);
-                            }
-                            if(addedItems.getItemMeta()!=null&&addedItems.getItemMeta().getLore()!=null&&addedItems.getItemMeta().getLore().contains(Lang.ITEMS_ESSENCE)){
-                                reduce(inventory, 1);
-                                UhcPlayer uhcPlayer = playerManager.getUhcPlayer(player);
-                                uhcPlayer.getTeam().xpTeam(uhcPlayer);
-                                addCraftedTimes(player, craft.getRealCraft(), 1);
-                                showLimitMessage(player, craft);
-                                return;
-                            }
-                            if(addedItems.getItemMeta()!=null&&addedItems.getItemMeta().getLore()!=null&&addedItems.getItemMeta().getLore().contains(Lang.ITEMS_FENRIR)){
-                                reduce(inventory, 1);
-                                UhcItems.spawnFenrir(player.getLocation(),player);
-                                addCraftedTimes(player, craft.getRealCraft(), 1);
-                                showLimitMessage(player, craft);
-                                return;
-                            }
-                            if(addedItems.getItemMeta()!=null&&addedItems.getItemMeta().getLore()!=null&&addedItems.getItemMeta().getLore().contains(Lang.ITEMS_DAREDEVIL)){
-                                reduce(inventory, 1);
-                                UhcItems.spawnDaredevil(player.getLocation());
-                                addCraftedTimes(player, craft.getRealCraft(), 1);
-                                showLimitMessage(player, craft);
-                                return;
-                            }
-                            //broadcastMessage("pass 2  " + addedItems.toString());
-                            if(craft.getRealCraft()!=null && craft.getRealCraft().isUnbreakable()){
-                                ItemMeta meta = addedItems.getItemMeta();
-                                meta.setUnbreakable(true);
-                                addedItems.setItemMeta(meta);
-                            }
-                            if(addedItems.getItemMeta()!=null&&addedItems.getItemMeta().getLore()!=null&&itemStack.getType().getMaxStackSize()==1){
-                                ItemMeta meta = addedItems.getItemMeta();
+                            addedItemStack = itemStack.clone();
+                            if(addedItemStack.getItemMeta()!=null&&addedItemStack.getItemMeta().getLore()!=null&&itemStack.getType().getMaxStackSize()==1){
+                                ItemMeta meta = addedItemStack.getItemMeta();
                                 List<String> lores = meta.getLore();
                                 lores.add("");
-                                lores.add(Lang.ITEMS_MADE_BY.replaceAll("%player_name%",player.getName()
+                                lores.add(Lang.ITEMS_MADE_BY.replaceAll("%player_name%",playerManager.getUhcPlayer(player).getName()
                                         ).replaceAll("&","\u00A7"));
                                 meta.setLore(lores);
-                                addedItems.setItemMeta(meta);
+                                addedItemStack.setItemMeta(meta);
                             }
                             //broadcastMessage("pass 3  " + addedItems.toString());
                             int addedItemCount = ((int) Math.floor(
-                                    (double) Math.min(getAddableItemCount(event.getView().getBottomInventory(), addedItems),
-                                            itemStack.getAmount() * getMaximumCrafts(inventory)) / itemStack.getAmount())
+                                    (double) Math.min(getAddableItemCount(event.getView().getBottomInventory(), addedItemStack),
+                                            addedItemStack.getAmount() * getMaximumCrafts(inventory)) / addedItemStack.getAmount())
                             );
                             //broadcastMessage("pass 4  "+addedItems.toString()+addedItemCount);
                             if (craft.getRealCraft()!=null && craft.hasLimit()) {
                                 addedItemCount = Math.min(addedItemCount, craft.getLimit() - getCraftedTimes(player, craft.getRealCraft()));
                             }
-                            if (itemStack.getType().getMaxStackSize()==1){
-                                for(int i = 0 ; i < addedItemCount ; i++){
-                                    event.getWhoClicked().getInventory().addItem(addedItems);
-                                }
-                            }else{
-                                addedItems.setAmount(addedItemCount * itemStack.getAmount());
-                                event.getWhoClicked().getInventory().addItem(addedItems);
+                            //----------
+                            if(addedItemCount>0) {
+                                addedItemCount = handleSpecialCrafting(addedItemCount, player);
+                                if(addedItemCount==0)return;
                             }
-                            reduce(inventory, addedItemCount);
-                            addCraftedTimes(player, craft.getRealCraft(), addedItemCount);
-                            showLimitMessage(player, craft);
-                        } else {
-                            if (craft.hasLimit() && getCraftedTimes(player, craft.getRealCraft()) == craft.getLimit()) {
-                                //broadcastMessage("(java.452)");
+                            //----------
+                            if (addedItemCount<0){;
+                                event.setCancelled(true);
                                 return;
                             }
+                            if (!addedItemStack.getType().equals(Material.AIR)) {
+                                if (addedItemStack.getType().getMaxStackSize() == 1) {
+                                    for (int i = 0; i < addedItemCount; i++) {
+                                        event.getWhoClicked().getInventory().addItem(addedItemStack);
+                                    }
+                                } else {
+                                    addedItemStack.setAmount(addedItemCount * addedItemStack.getAmount());
+                                    event.getWhoClicked().getInventory().addItem(addedItemStack);
+                                }
+                            }
+                            reduce(inventory, addedItemCount);
+
+                            addCraftedTimes(player, craft.getRealCraft(), addedItemCount);
+                            showLimitMessage(player, craft);
+
+                        } else {
+                            /*if (craft.hasLimit() && getCraftedTimes(player, craft.getRealCraft()) >= craft.getLimit()) {
+                                //broadcastMessage("(java.452)");
+                                return;
+                            }*/
                             ItemStack cursor = event.getCursor();
                             if (cursor == null || cursor.getType() == Material.AIR || itemStack.isSimilar(cursor)) {
                                 int amount;
@@ -531,54 +591,35 @@ public class PlayerListener implements Listener {
                                     amount = cursor.getAmount() + itemStack.getAmount();
                                 }
                                 if (amount <= itemStack.getType().getMaxStackSize()) {
-                                    ItemStack newStack = itemStack.clone();
-                                    if(newStack.getItemMeta()!=null&&newStack.getItemMeta().getLore()!=null&&newStack.getItemMeta().getLore().contains(Lang.ITEMS_FUSION_ARMOR)){
-                                        newStack = UhcItems.createFusionArmor();
-                                    }
-                                    if(newStack.getItemMeta()!=null&&newStack.getItemMeta().getLore()!=null&&newStack.getItemMeta().getLore().contains(Lang.ITEMS_DEUS_EX_MACHINA)){
-                                        player.setHealth(player.getHealth()/2);
-                                    }
-                                    if(newStack.getItemMeta()!=null&&newStack.getItemMeta().getLore()!=null&&newStack.getItemMeta().getLore().contains(Lang.ITEMS_ESSENCE)){
-                                        reduce(inventory, 1);
-                                        UhcPlayer uhcPlayer = playerManager.getUhcPlayer(player);
-                                        uhcPlayer.getTeam().xpTeam(uhcPlayer);
-                                        addCraftedTimes(player, craft.getRealCraft(), 1);
-                                        showLimitMessage(player, craft);
-                                        return;
-                                    }
-                                    if(newStack.getItemMeta()!=null&&newStack.getItemMeta().getLore()!=null&&newStack.getItemMeta().getLore().contains(Lang.ITEMS_FENRIR)){
-                                        reduce(inventory, 1);
-                                        UhcItems.spawnFenrir(player.getLocation(),player);
-                                        addCraftedTimes(player, craft.getRealCraft(), 1);
-                                        showLimitMessage(player, craft);
-                                        return;
-                                    }
-                                    if(newStack.getItemMeta()!=null&&newStack.getItemMeta().getLore()!=null&&newStack.getItemMeta().getLore().contains(Lang.ITEMS_DAREDEVIL)){
-                                        reduce(inventory, 1);
-                                        UhcItems.spawnDaredevil(player.getLocation());
-                                        addCraftedTimes(player, craft.getRealCraft(), 1);
-                                        showLimitMessage(player, craft);
-                                        return;
-                                    }
-                                    if(craft.getRealCraft()!=null && craft.getRealCraft().isUnbreakable()){
-                                        ItemMeta meta = newStack.getItemMeta();
-                                        meta.setUnbreakable(true);
-                                        newStack.setItemMeta(meta);
-                                    }
-                                    if(newStack.getItemMeta()!=null&&newStack.getItemMeta().getLore()!=null&&itemStack.getType().getMaxStackSize()==1){
-                                        ItemMeta meta = newStack.getItemMeta();
+                                    addedItemStack = itemStack.clone();
+                                    int addedItemCount = handleSpecialCrafting(1, player);
+                                    if(addedItemCount==0)return;
+                                    if (addedItemStack.getItemMeta() != null && addedItemStack.getItemMeta().getLore() != null && itemStack.getType().getMaxStackSize() == 1) {
+                                        ItemMeta meta = addedItemStack.getItemMeta();
                                         List<String> lores = meta.getLore();
                                         lores.add("");
-                                        lores.add(Lang.ITEMS_MADE_BY.replaceAll("%player_name%",player.getName()
-                                            ).replaceAll("&","\u00A7"));
+                                        lores.add(Lang.ITEMS_MADE_BY.replaceAll("%player_name%", playerManager.getUhcPlayer(player).getName()
+                                        ).replaceAll("&", "\u00A7"));
                                         meta.setLore(lores);
-                                        newStack.setItemMeta(meta);
+                                        addedItemStack.setItemMeta(meta);
                                     }
-                                    newStack.setAmount(amount);
-                                    event.getView().setCursor(newStack);
+                                    if (event.getClick().equals(ClickType.NUMBER_KEY)) {
+                                        if (event.getView().getBottomInventory().getItem(event.getHotbarButton()) == null
+                                                || event.getView().getBottomInventory().getItem(event.getHotbarButton()).getType().equals(Material.AIR)) {
+                                            event.getView().getBottomInventory().setItem(event.getHotbarButton(),addedItemStack);
+                                        } else {
+                                            event.setCancelled(true);
+                                            return;
+                                        }
+                                    }else{
+                                        addedItemStack.setAmount(amount);
+                                        event.getView().setCursor(addedItemStack);
+                                    }
                                     reduce(inventory, 1);
+
                                     addCraftedTimes(player, craft.getRealCraft(), 1);
                                     showLimitMessage(player, craft);
+
                                 }
                             }
                         }
@@ -595,12 +636,89 @@ public class PlayerListener implements Listener {
             Bukkit.getScheduler().runTaskLater(plugin, new CheckBrewingStandAfterClick(inv.getHolder(), human),1);
         }*/
     }
+    
+    private int handleSpecialCrafting(int addedItemCount, Player player){
+        if (addedItemStack.getItemMeta() != null && addedItemStack.getItemMeta().getLore() != null && addedItemStack.getItemMeta().getLore().contains(Lang.ITEMS_DEUS_EX_MACHINA)) {
+            player.setHealth(player.getHealth() / 2);
+        }
+        //broadcastMessage(addedItems.toString());
+        if (addedItemStack.getItemMeta() != null && addedItemStack.getItemMeta().getLore() != null && addedItemStack.getItemMeta().getLore().contains(Lang.ITEMS_DICE)) {
+            addedItemStack = GameManager.getGameManager().createDiceResult();
+            addedItemCount = 1;
+        }
+        if (addedItemStack.getItemMeta() != null && addedItemStack.getItemMeta().getLore() != null && addedItemStack.getItemMeta().getLore().contains(Lang.ITEMS_ESSENCE)) {
+            UhcPlayer uhcPlayer = playerManager.getUhcPlayer(player);
+            uhcPlayer.getTeam().xpTeam(uhcPlayer);
+            addedItemCount = 1;
+            addedItemStack = new ItemStack(Material.ENCHANTING_TABLE);
+        }
+        if (addedItemStack.getItemMeta() != null && addedItemStack.getItemMeta().getLore() != null && addedItemStack.getItemMeta().getLore().contains(Lang.ITEMS_FUSION_ARMOR)) {
+            addedItemStack = UhcItems.createFusionArmor();
+        }
+        //broadcastMessage("pass 1  " + addedItems.toString());
+        if (addedItemStack.getItemMeta() != null && addedItemStack.getItemMeta().getLore() != null && addedItemStack.getItemMeta().getLore().contains(Lang.ITEMS_FENRIR)) {
+            UhcItems.spawnFenrir(player.getLocation(), player);
+            addedItemCount = 1;
+            addedItemStack = new ItemStack(Material.AIR);
+        }
+        if (addedItemStack.getItemMeta() != null && addedItemStack.getItemMeta().getLore() != null && addedItemStack.getItemMeta().getLore().contains(Lang.ITEMS_DAREDEVIL)) {
+            UhcItems.spawnDaredevil(player.getLocation());
+            addedItemCount = 1;
+            addedItemStack = new ItemStack(Material.AIR);
+        }
+        if(addedItemStack.getItemMeta() != null && addedItemStack.getItemMeta().getLore() != null && addedItemStack.getItemMeta().getLore().contains(Lang.ITEMS_FATE)){
+            UhcItems.placeFatesCall(player.getLocation());
+            addedItemCount = 1;
+            addedItemStack = new ItemStack(Material.AIR);
+            if(GameManager.getGameManager().getGameState().equals(GameState.DEATHMATCH)) {
+                gm.handleDeathMatchBlockClear(player.getLocation());
+            }
+        }
+        if(addedItemStack.getItemMeta() != null && addedItemStack.getItemMeta().getLore() != null && addedItemStack.getItemMeta().getLore().contains(Lang.ITEMS_PANDORAS_BOX)){
+            UhcItems.placePandora(player.getLocation());
+            addedItemCount = 1;
+            addedItemStack = new ItemStack(Material.AIR);
+            if(GameManager.getGameManager().getGameState().equals(GameState.DEATHMATCH)) {
+                gm.handleDeathMatchBlockClear(player.getLocation());
+            }
+        }
+        if(addedItemStack.getItemMeta() != null && addedItemStack.getItemMeta().getLore() != null && addedItemStack.getItemMeta().getLore().contains(Lang.ITEMS_CHEST_OF_FATE)){
+            UhcItems.placeChestOfFate(player.getLocation(), player);
+            addedItemCount = 1;
+            addedItemStack = new ItemStack(Material.AIR);
+            if(GameManager.getGameManager().getGameState().equals(GameState.DEATHMATCH)) {
+                gm.handleDeathMatchBlockClear(player.getLocation());
+            }
+        }
+        if(addedItemStack.getItemMeta() != null && addedItemStack.getItemMeta().getLore() != null && addedItemStack.getItemMeta().getLore().contains(Lang.ITEMS_LUCKY_SHEARS)){
+            if(player.getHealth()>=10) {
+                player.sendMessage(Lang.ITEMS_CANT_CRAFT_NOW);
+                return 0;
+            }
+        }
+        //broadcastMessage("pass 2  " + addedItems.toString());
+        if (addedItemStack.getItemMeta() != null && addedItemStack.getItemMeta().getLore() != null && addedItemStack.getItemMeta().getLore().contains(Lang.ITEMS_UNBREAKABLE)) {
+            ItemMeta meta = addedItemStack.getItemMeta();
+            meta.setUnbreakable(true);
+            addedItemStack.setItemMeta(meta);
+        }
+        return addedItemCount;
+    }
 
     @EventHandler
     void onInventoryDrag(InventoryDragEvent event) {
+        if (isEnchantCheckInventory(event.getView().getTopInventory().getType())) {
+            if (isEnchantCheckInventory(event.getInventory().getType())){
+                if (isCantEnchant(event.getOldCursor())) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+        }
         if (event.getInventory().getHolder() instanceof CraftRecipeViewerInventoryHolder ||
                 event.getInventory().getHolder() instanceof CraftRecipeInventoryHolder) {
             event.setCancelled(true);
+            return;
         }
         if (event.getInventory().getHolder() instanceof CraftingInventoryHolder) {
             Inventory inventory = event.getView().getTopInventory();
@@ -616,20 +734,37 @@ public class PlayerListener implements Listener {
                     updateInventory((Player) event.getWhoClicked(), inventory);
                 }
             }.runTaskLater(plugin, 1);
+            return;
+        }
+        if (event.getInventory().getHolder() instanceof BackpackInventoryHolder) {
+            ((BackpackInventoryHolder) event.getInventory().getHolder()).handleClick(event.getInventory(), (Player) event.getWhoClicked());
         }
     }
 
     @EventHandler
     void onInventoryOpen(InventoryOpenEvent event) {
         if (event.getInventory().getType() == InventoryType.WORKBENCH) {
-            new BukkitRunnable() {
+            /*(new BukkitRunnable() {
                 @Override
                 public void run() {
                     event.getPlayer().openInventory(recipe.createCraftingInventory(false));
                 }
-            }.runTaskLater(plugin, 1);
+            }.runTaskLater(plugin, 1);*/
+            event.getPlayer().openInventory(recipe.createCraftingInventory());
             event.setCancelled(true);
         }
+
+        if (event.getInventory().getType().equals(InventoryType.ENCHANTING)){
+            EnchantingInventory inv = (EnchantingInventory) event.getInventory();
+            ItemStack lapis = new ItemStack(Material.LAPIS_LAZULI,64);
+            ItemMeta meta = lapis.getItemMeta();
+            List<String> lore = new ArrayList<>();
+            lore.add(Lang.ITEMS_CANT_MOVE);
+            meta.setLore(lore);
+            lapis.setItemMeta(meta);
+            inv.setSecondary(lapis);
+        }
+
     }
 
     @EventHandler
@@ -648,6 +783,18 @@ public class PlayerListener implements Listener {
                     }
                 }
             }
+            return;
+        }
+
+        if (event.getInventory().getHolder() instanceof BackpackInventoryHolder) {
+            ((BackpackInventoryHolder) event.getInventory().getHolder()).saveContents(event.getInventory());
+            ((Player) event.getPlayer()).playSound(event.getPlayer().getLocation(), Sound.ENTITY_SHULKER_CLOSE, 1, 1);
+            return;
+        }
+
+        if (event.getInventory().getType().equals(InventoryType.ENCHANTING)){
+            EnchantingInventory inv = (EnchantingInventory) event.getInventory();
+            inv.setSecondary(new ItemStack(Material.AIR));
         }
     }
 
@@ -660,7 +807,7 @@ public class PlayerListener implements Listener {
 
     void addCraftedTimes(Player player, Craft craft, int amount) {
         UhcPlayer uhcPlayer = playerManager.getUhcPlayer(player);
-        if (craft.getCraft() == null) {
+        if (craft == null || craft.getCraft() == null) {
             return;
         }
         if (!craftedItems.containsKey(uhcPlayer)) {
@@ -727,6 +874,9 @@ public class PlayerListener implements Listener {
             meta.setLore(lore);
             newStack.setItemMeta(meta);
         }
+        if (newStack.getType().equals(Material.AIR)){
+            newStack = BARRIER;
+        }
         for (int i = 0; i < Config.CRAFTING_PATTERN.size(); i++) {
             for (int j = 0; j < 9; j++) {
                 InventoryItem item = recipe.getInventoryItem(Config.CRAFTING_PATTERN, i, j);
@@ -738,9 +888,12 @@ public class PlayerListener implements Listener {
     }
 
     void showLimitMessage(Player player, CraftRecipe craft) {
+        if (craft == null || craft.getCraft() == null) {
+            return;
+        }
         if (craft.hasLimit()) {
             if (player != null) {
-                String text = Config.SHOW_LIMIT_MESSAGE.replace("&", "\u00A7")
+                String text = Config.SHOW_LIMIT_MESSAGE.replaceAll("&", "\u00A7")
                         .replace("{times}", String.valueOf(getCraftedTimes(player, craft.getRealCraft())))
                         .replace("{limit}", String.valueOf(craft.getLimit()));
                 String name = craft.getRealCraft().getName().replace("0","")
@@ -884,7 +1037,7 @@ public class PlayerListener implements Listener {
         for (ItemStack itemStack : itemStacks) {
             //hash += (i + 1) * itemStacks[i].getType().hashCode();
             if (UniversalMaterial.isMeat(itemStack.getType())) {
-                hash = 131 * hash + Material.BEEF.hashCode();
+                hash = 131 * hash + Material.PORKCHOP.hashCode();
             } else if (Tag.ANVIL.isTagged(itemStack.getType())) {
                 hash = 131 * hash + Material.ANVIL.hashCode();
             } else if (Tag.ITEMS_MUSIC_DISCS.isTagged(itemStack.getType())) {
@@ -893,6 +1046,8 @@ public class PlayerListener implements Listener {
                 hash = 131 * hash + Material.WHITE_WOOL.hashCode();
             } else if (Tag.LEAVES.isTagged(itemStack.getType())) {
                 hash = 131 * hash + Material.OAK_LEAVES.hashCode();
+            } else if (Tag.PLANKS.isTagged(itemStack.getType())) {
+                hash = 131 * hash + Material.OAK_PLANKS.hashCode();
             } else if (itemStack.getType().equals(Material.CHARCOAL)) {
                 hash = 131 * hash + Material.COAL.hashCode();
             } else if (itemStack.getType().equals(Material.COBBLED_DEEPSLATE)) {
@@ -911,6 +1066,8 @@ public class PlayerListener implements Listener {
                 hash += Material.OAK_SAPLING.hashCode();
             } else if (UniversalMaterial.isDiamondArmor(itemStack.getType())) {
                 hash += Material.DIAMOND_HELMET.hashCode();
+            } else if (Tag.WOOL.isTagged(itemStack.getType())) {
+                hash += Material.WHITE_WOOL.hashCode();
             } else {
                 hash += itemStack.getType().hashCode();
             }

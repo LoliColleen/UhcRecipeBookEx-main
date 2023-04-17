@@ -38,6 +38,14 @@ public class Config {
 
     public static String RECIPE_REMIND_MESSAGE;
 
+    public static String RECIPE_REMIND_MESSAGE_BUTTON;
+
+    public static String RECIPE_REMIND_MESSAGE_AFTER_BUTTON;
+
+    public static String LACK_OF_MATERIAL_MESSAGE;
+
+    public static String REACH_LIMIT_MESSAGE;
+
     static void loadConfig() throws NullPointerException {
         FileConfiguration config = UhcRecipeBookEx.getInstance().getConfig();
         INVENTORY_PATTERN = Arrays.asList(
@@ -66,7 +74,11 @@ public class Config {
 
         SHOW_LIMIT_MESSAGE = config.getString("message.limit-show");
         RECIPE_REMIND_MESSAGE = config.getString("message.recipe-remind");
+        RECIPE_REMIND_MESSAGE_BUTTON = config.getString("message.recipe-remind-button");
+        RECIPE_REMIND_MESSAGE_AFTER_BUTTON = config.getString("message.recipe-remind-after-button");
         BUTTON_HOVER_MESSAGE = config.getString("message.button-hover");
+        LACK_OF_MATERIAL_MESSAGE = config.getString("message.lack-of-material");
+        REACH_LIMIT_MESSAGE = config.getString("message.reach-limit");
         for (var key : Objects.requireNonNull(map).getKeys(false)) {
             switch (Objects.requireNonNull(map.getString(key + ".type"))) {
                 case "item":

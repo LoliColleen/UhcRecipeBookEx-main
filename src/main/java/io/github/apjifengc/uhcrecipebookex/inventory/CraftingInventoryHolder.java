@@ -5,6 +5,7 @@ import io.github.apjifengc.uhcrecipebookex.Config;
 import io.github.apjifengc.uhcrecipebookex.UhcRecipeBookEx;
 import io.github.apjifengc.uhcrecipebookex.inventory.item.InventoryItem;
 import io.github.apjifengc.uhcrecipebookex.inventory.item.RecipeSlotItem;
+import io.github.apjifengc.uhcrecipebookex.listener.RecipeReminder;
 import io.github.apjifengc.uhcrecipebookex.util.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -23,7 +24,11 @@ public class CraftingInventoryHolder implements InventoryHolder {
     }
 
     public static void autoOpen(Player player, Craft craft) {
-        var inv = recipeInventory.createCraftingInventory(true);
+        if (!RecipeReminder.isEnough(player, craft)){
+            player.sendMessage(Config.LACK_OF_MATERIAL_MESSAGE.replaceAll("&", "\u00A7"));
+            return;
+        }
+        var inv = recipeInventory.createCraftingInventory();
         var recipe = craft.getRecipe();
         for (int i = 0; i < Config.CRAFTING_PATTERN.size(); i++) {
             for (int j = 0; j < 9; j++) {
@@ -46,7 +51,7 @@ public class CraftingInventoryHolder implements InventoryHolder {
         for (int i = 0; i < inv.getSize(); i++) {
             var item = inv.getItem(i);
             if (item != null) {
-                if (Util.simpleCheckSimilar(target, item)) {
+                if (Util.simpleCheckSimilar(target, item) && (item.getItemMeta()==null || !(item.getItemMeta().getLore()!=null&&item.getItemMeta().getLore().get(0).contains("\u00a78")))) {
                     if (item.getAmount() == 1) {
                         inv.setItem(i, null);
                     } else {

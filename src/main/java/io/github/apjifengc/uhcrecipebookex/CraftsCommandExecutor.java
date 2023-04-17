@@ -1,9 +1,11 @@
 package io.github.apjifengc.uhcrecipebookex;
 
+import com.gmail.val59000mc.configuration.MainConfig;
 import com.gmail.val59000mc.customitems.Craft;
 import com.gmail.val59000mc.customitems.CraftsManager;
 import com.gmail.val59000mc.languages.Lang;
 import io.github.apjifengc.uhcrecipebookex.inventory.CraftingInventoryHolder;
+import io.github.apjifengc.uhcrecipebookex.listener.RecipeReminder;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

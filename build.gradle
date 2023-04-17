@@ -21,9 +21,9 @@ repositories {
 
 dependencies {
     implementation 'org.projectlombok:lombok:1.18.24'
-    implementation files("$rootDir/libs/UhcCore-1.19.4.jar")
+    implementation fileTree('libs')
     compileOnly 'org.spigotmc:spigot-api:1.17.1-R0.1-SNAPSHOT'
-    shadow 'com.alkaidmc.alkaid:alkaid-message:1.0.0-SNAPSHOT'
+    shadow 'com.alkaidmc.alkaid:alkaid-message:8fb64b2-SNAPSHOT'
     annotationProcessor 'org.projectlombok:lombok:1.18.22'
 }
 
@@ -31,7 +31,7 @@ shadowJar {
     configurations = [project.configurations.shadow]
     archiveClassifier = ''
 
-    relocate 'com.alkaidmc.alkaid','io.github.apjifengc.uhcrecipebookex.internal.alkaid'
+    relocate 'io.papermc.lib','yuying.pvp.paperlib'
 }
 
 def targetJavaVersion = 11
