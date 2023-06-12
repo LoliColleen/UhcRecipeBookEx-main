@@ -72,13 +72,6 @@ public class Config {
         GUI_CRAFTING_NAME = config.getString("inventory.crafting-name");
         GUI_AUTO_CRAFTING_NAME = config.getString("inventory.auto-crafting-name");
 
-        SHOW_LIMIT_MESSAGE = config.getString("message.limit-show");
-        RECIPE_REMIND_MESSAGE = config.getString("message.recipe-remind");
-        RECIPE_REMIND_MESSAGE_BUTTON = config.getString("message.recipe-remind-button");
-        RECIPE_REMIND_MESSAGE_AFTER_BUTTON = config.getString("message.recipe-remind-after-button");
-        BUTTON_HOVER_MESSAGE = config.getString("message.button-hover");
-        LACK_OF_MATERIAL_MESSAGE = config.getString("message.lack-of-material");
-        REACH_LIMIT_MESSAGE = config.getString("message.reach-limit");
         for (var key : Objects.requireNonNull(map).getKeys(false)) {
             switch (Objects.requireNonNull(map.getString(key + ".type"))) {
                 case "item":
@@ -121,5 +114,13 @@ public class Config {
                     throw new IllegalArgumentException("The type '" + map.getString(key + ".type") + "' is unknown!");
             }
         }
+
+        SHOW_LIMIT_MESSAGE = config.getString("message.limit-show");
+        RECIPE_REMIND_MESSAGE = config.getString("message.recipe-remind");
+        RECIPE_REMIND_MESSAGE_BUTTON = config.getString("message.recipe-remind-button");
+        RECIPE_REMIND_MESSAGE_AFTER_BUTTON = config.getString("message.recipe-remind-after-button");
+        BUTTON_HOVER_MESSAGE = config.getString("message.button-hover");
+        LACK_OF_MATERIAL_MESSAGE = config.getString("message.lack-of-material");
+        REACH_LIMIT_MESSAGE = config.getString("message.reach-limit");
     }
 }
