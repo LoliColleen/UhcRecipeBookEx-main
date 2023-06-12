@@ -362,11 +362,34 @@ public class PlayerListener implements Listener {
             }
 
             if (isEnchantCheckInventory(event.getView().getTopInventory().getType())){
-                if (event.getAction().equals(InventoryAction.MOVE_TO_OTHER_INVENTORY) && event.getClickedInventory().getType().equals(InventoryType.PLAYER)
-                || (event.getAction().equals(InventoryAction.PLACE_ALL) || event.getAction().equals(InventoryAction.PLACE_ONE) || event.getAction().equals(InventoryAction.PLACE_SOME))
-                && event.getClickedInventory().getType().equals(InventoryType.PLAYER)) {
-                    event.setCancelled(true);
-                    return;
+                if (event.isLeftClick()||event.isRightClick()){
+
+                    if (event.isShiftClick()) {
+                        if (event.getClickedInventory().getType().equals(InventoryType.PLAYER)) {
+                            if (event.getCurrentItem() != null && isCantEnchant(event.getCurrentItem())) {
+                                event.setCancelled(true);
+                                return;
+                            }
+                        }
+                    }else{
+                        if (isEnchantCheckInventory(event.getClickedInventory().getType())) {
+                            if (event.getCursor() != null && isCantEnchant(event.getCursor())) {
+                                event.setCancelled(true);
+                                return;
+                            }
+                        }
+                    }
+
+                }
+
+                if (event.getClick().equals(ClickType.NUMBER_KEY)) {
+                    if (isEnchantCheckInventory(event.getClickedInventory().getType())) {
+                        if (event.getView().getBottomInventory().getItem(event.getHotbarButton()) != null
+                                && isCantEnchant(event.getView().getBottomInventory().getItem(event.getHotbarButton()))) {
+                            event.setCancelled(true);
+                            return;
+                        }
+                    }
                 }
             }
 

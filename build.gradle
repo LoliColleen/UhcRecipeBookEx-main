@@ -30,8 +30,6 @@ dependencies {
 shadowJar {
     configurations = [project.configurations.shadow]
     archiveClassifier = ''
-
-    relocate 'io.papermc.lib','yuying.pvp.paperlib'
 }
 
 def targetJavaVersion = 11
